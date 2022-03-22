@@ -238,7 +238,7 @@ class Main:  # 主进程主要功能
         self.msgToShowQ.put(text)
         chatHistory = open('./log/'+self.room+' '+self.inittime+'.txt', 'a')
         if os.path.getsize('./log/'+self.room+' '+self.inittime+'.txt') < 1024576:
-            chatHistory.write(self.nick+':'+self.text+'\n')
+            chatHistory.write(text)
             chatHistory.close()
 
     def on_message(self, ws, message):
