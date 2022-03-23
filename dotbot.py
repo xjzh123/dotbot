@@ -30,12 +30,11 @@ def sendData(text):
 
 
 class Runbox:  # 自动回复等功能逻辑
-    def __init__(self, room, name):
+    def __init__(self, room, name, logpath):
         # 包含了房间名称，bot的名称
         self.room = room
         self.name = name
-        self.inittime = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime())
-        print('###'+self.inittime)
+        self.logpath = logpath
 
     def sendmsg(self, msg):
         '''
@@ -130,16 +129,15 @@ class Runbox:  # 自动回复等功能逻辑
             if cobj.isdigit() == True and len(cobj) > 0:
                 cobj = int(cobj)
                 # 如果聊天记录小于1mb
-                if os.path.getsize('./log/'+self.room+' '+self.inittime+'.txt') < 1024576:
-                    historyList = open(
-                        './log/'+self.room+' '+self.inittime+'.txt', 'r').readlines()
-                    print('### ' + str(cobj))
-                    if cobj >= 1 and cobj <= len(historyList):
-                        chatHistory = ''.join(historyList[-cobj-1:-1])
-                        self.wsendmsg(' \n'+chatHistory)
-                    else:
-                        self.wsendmsg('当前仅记录了'+str(len(historyList)) +
-                                      '条聊天记录。无法查询'+str(cobj)+'条聊天记录。')
+                if os.path.getsize(self.logpath) < 1024576:
+                    with open(self.logpath, 'r') as chatHistory:
+                        historyList = chatHistory.readlines()
+                        if cobj >= 1 and cobj <= len(historyList):
+                            chstr = ''.join(historyList[-cobj-1:-1])
+                            self.wsendmsg(' \n'+chstr)
+                        else:
+                            self.wsendmsg(
+                                '当前仅记录了'+str(len(historyList)) + '条聊天记录。无法查询'+str(cobj)+'条聊天记录。')
                 else:
                     self.wsendmsg('当前记录聊天记录过文件过大。拒绝查询。')
             else:
@@ -172,12 +170,16 @@ class Main:  # 主进程主要功能
                 从ProBot传来的参数
         '''
         self.auto = True        # 自动回复开关，True为开启，False为关闭
-        self.runbox = Runbox(room, name)   # 处理信息库，主要负责自动回复\
         self.room = room
         self.name = name
-        self.msgToShowQ = msgToShowQ                 # 将从hackchat收到的消息发送到Tkhand
+        self.msgToShowQ = msgToShowQ         # 将从hackchat收到的消息发送到Tkhand
         self.msgToSendQ = msgToSendQ         # 接收从Tkhand传来的消息并发送到hackchat
         self.cmdToExecQ = cmdToExecQ         # 接收来自Tkhand 传来的指令
+        self.inittime = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime())
+        self.logpath = './log/'+self.room+' '+self.inittime+'.txt'
+        with open(self.logpath, 'x') as log:
+            pass
+        self.runbox = Runbox(room, name, self.logpath)   # 处理信息库，主要负责自动回复
 
     def askMsgToSend(self, ws):
         '''
@@ -236,15 +238,15 @@ class Main:  # 主进程主要功能
                 将需要显示的内容发送到msgToShow队列，并写入聊天记录
         '''
         self.msgToShowQ.put(text)
-        chatHistory = open('./log/'+self.room+' '+self.inittime+'.txt', 'a')
-        if os.path.getsize('./log/'+self.room+' '+self.inittime+'.txt') < 1024576:
-            chatHistory.write(text)
-            chatHistory.close()
+        with open(self.logpath, 'a') as chatHistory:
+            if os.path.getsize(self.logpath) < 1024576:
+                chatHistory.write(text + '\n')
 
     def on_message(self, ws, message):
         '''
                 服务器有数据返回时调用，根据不同的服务器数据调用自动回复与显示到界面聊天框
         '''
+        self.ws = ws
         js_ms = json.loads(message)  # 把信息装载成json
         if self.auto:
             self.runbox.handle(js_ms, ws)  # 调用自动回复，包括和机器人聊天、打招呼
@@ -397,11 +399,11 @@ class ProBot(Process):  # 继承进程类，定义Bot进程：由main处理信�
 if __name__ == '__main__':
     print('### main ###')
     #hcroom = input('input room name. e.g: your-channel. ')
-    #if hcroom == 'yc':
+    # if hcroom == 'yc':
     #    hcroom = 'your-channel'
-    #elif hcroom == 'ts':
+    # elif hcroom == 'ts':
     #    hcroom = 'test'
-    #elif hcroom.lower() == 'cn':
+    # elif hcroom.lower() == 'cn':
     #    hcroom = 'chinese'
     msgToShowQ = Queue()   # 如果收到消息就发送到这个队列，并由Tkhand显示出内容
     msgToSendQ = Queue()   # 在Tkhand中把消息发送到ttomp这个队列，并由main处理发送到hackchat
