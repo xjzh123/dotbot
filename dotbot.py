@@ -187,7 +187,7 @@ class Main:  # 主进程主要功能
         '''
         while True:
             if not self.msgToSendQ.empty():
-                ws.send(sendData(self.msgToSendQ.get()))
+                self.runbox.sendmsg(self.msgToSendQ.get())
 
     def askCmdToExec(self, ws):  # 控制bot的命令
         '''
@@ -246,7 +246,6 @@ class Main:  # 主进程主要功能
         '''
                 服务器有数据返回时调用，根据不同的服务器数据调用自动回复与显示到界面聊天框
         '''
-        self.ws = ws
         js_ms = json.loads(message)  # 把信息装载成json
         if self.auto:
             self.runbox.handle(js_ms, ws)  # 调用自动回复，包括和机器人聊天、打招呼
@@ -387,7 +386,7 @@ class ProBot(Process):  # 继承进程类，定义Bot进程：由main处理信�
         '''
                 定义进程活动。Probot进程连接hackchat，定义了服务器发送信息、出现错误、从服务器踢出时执行的方法。
         '''
-        websocket.enableTrace(True)
+        websocket.enableTrace(False)#禁用控制台输出
         ws = websocket.WebSocketApp("wss://hack.chat/chat-ws",
                                     on_message=self.main.on_message,
                                     on_error=self.main.on_error,
