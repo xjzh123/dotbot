@@ -137,7 +137,6 @@ class Runbox:  # 自动回复等功能逻辑
 
         elif ccmd == 'c' or ccmd == 'color':  # 快速获取颜色代码
             if cobj in self.colordict.keys():
-                print('###'+str(self.colordict))
                 getcolor = self.colordict[cobj]
                 self.wsendmsg("`/color #"+getcolor+'`')
             else:
@@ -417,18 +416,18 @@ class ProBot(Process):  # 继承进程类，定义Bot进程：由main处理信�
 
 if __name__ == '__main__':
     print('### main ###')
-    #hcroom = input('input room name. e.g: your-channel. ')
-    # if hcroom == 'yc':
-    #    hcroom = 'your-channel'
-    # elif hcroom == 'ts':
-    #    hcroom = 'test'
-    # elif hcroom.lower() == 'cn':
-    #    hcroom = 'chinese'
+    hcroom = input('input room name. e.g: your-channel. ')
+    if hcroom == 'yc':
+        hcroom = 'your-channel'
+    elif hcroom == 'ts':
+        hcroom = 'test'
+    elif hcroom.lower() == 'cn':
+        hcroom = 'chinese'
     msgToShowQ = Queue()   # 如果收到消息就发送到这个队列，并由Tkhand显示出内容
     msgToSendQ = Queue()   # 在Tkhand中把消息发送到ttomp这个队列，并由main处理发送到hackchat
     cmdToExecQ = Queue()   # 在Tkhand中把指令发送到cmdToExecQ这个队列，并在main中处理
     # 2个进程处理后端和前端
-    p1 = ProBot(hcroom="your-channel", botname="dotbot", msgToShowQ=msgToShowQ,
+    p1 = ProBot(hcroom=hcroom, botname="dotbot", msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
     p2 = Tkhand(msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
