@@ -128,7 +128,7 @@ class Runbox:  # 自动回复等功能逻辑
 
 |command name<other names>|command obj|command effect|
 |----|----|----|
-|color<c>|404r<r>, 404b<b>, wikidot, vscode|Gives you a command to change the name of your name. | 
+|color<c>|[the nickname of a user whose nickname has special color]|Gives you a command to change the color of your name. | 
 |translate<t,fy>|[what you wanna translate]|Translates the text into English or Chinese. VERY POOR TRANSLATION. Not responsible for the translated content. |
 |history<h>|[a number from 1 to how many messages dotbot can show]|Shows you messages which are sent before you use this command. Useful when you are new to a channel and want to know what has happened. May not work. |
 |help|[no object]|Shows you how to use the commands above. |
@@ -136,6 +136,7 @@ class Runbox:  # 自动回复等功能逻辑
             ''')
 
         elif ccmd == 'c' or ccmd == 'color':  # 快速获取颜色代码
+            cobj = cobj.lstrip('@').rstrip()
             if cobj in self.colordict.keys():
                 getcolor = self.colordict[cobj]
                 self.wsendmsg("`/color #"+getcolor+'`')
@@ -183,7 +184,7 @@ class Runbox:  # 自动回复等功能逻辑
                 当返回数据是onlineset（加入一个新房间时会发生）将会调用
         '''
         self.onlineuser = self.nicks
-        self.sendmsg('/color #007acc')  # 自动设置名字颜色
+        self.sendmsg('/color #ffffff')  # 自动设置名字颜色
         self.sendmsg(
             "Hi! Dotbot is here. \nDotbot is based on Foolishbird by Light and is made by 4n0n4me. ")
 
