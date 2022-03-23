@@ -83,8 +83,6 @@ class Runbox:  # 自动回复等功能逻辑
         '''
                 处理聊天命令
         '''
-        print('### chatcommand ###')
-        print('### cmdtext:'+self.text)
         ccmdtxt = self.text.replace('.', '', 1)
         ccmdlist = ccmdtxt.split(' ', 1)
         ccmd = ccmdlist[0]
@@ -408,7 +406,7 @@ if __name__ == '__main__':
     msgToSendQ = Queue()   # 在Tkhand中把消息发送到ttomp这个队列，并由main处理发送到hackchat
     cmdToExecQ = Queue()   # 在Tkhand中把指令发送到cmdToExecQ这个队列，并在main中处理
     # 2个进程处理后端和前端
-    p1 = ProBot(hcroom="test", botname="dotbot", msgToShowQ=msgToShowQ,
+    p1 = ProBot(hcroom="your-channel", botname="dotbot", msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
     p2 = Tkhand(msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
