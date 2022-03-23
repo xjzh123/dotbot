@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-dotbot alpha 是 dotbot 的第一个稳定版本，一般可以正常运行。
+dotbot
 需要注意的是，请选择合理的执行方式。
 目前发现如果使用 Windows 打开方式，直接用 Python 打开，会发生路径错误。
 最好使用 cmd，在程序所在目录下使用[python dotbot.py]执行。
