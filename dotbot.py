@@ -32,18 +32,18 @@ def sendData(text):
 class Runbox:  # 自动回复等功能逻辑
     def __init__(self, room, name, logpath):
         # 包含了房间名称，bot的名称
-        self.auto =True
+        self.auto = True
         self.room = room
         self.name = name
         self.logpath = logpath
         self.onlineuser = []
         self.colordict = {
-            '404r':'ff5722',
-            'r':'ff5722',
-            '404b':'c0ffee',
-            'b':'c0ffee',
-            'wikidot':'f02727',
-            'vscode':'007acc'
+            '404r': 'ff5722',
+            'r': 'ff5722',
+            '404b': 'c0ffee',
+            'b': 'c0ffee',
+            'wikidot': 'f02727',
+            'vscode': '007acc'
         }
 
     def sendmsg(self, msg):
@@ -86,14 +86,14 @@ class Runbox:  # 自动回复等功能逻辑
                     self.chat()  # 调用和机器人聊天
 
                 # 用户进入类型
-                elif self.cmd== "onlineAdd":
+                elif self.cmd == "onlineAdd":
                     self.onlineadd()  # 调用打招呼
 
                 # 进入聊天时用户的列表
                 elif self.cmd == "onlineSet":
                     self.onlineset()  # 调用给所有人打招呼
 
-                #用户离开类型
+                # 用户离开类型
                 elif self.cmd == "onlineRemove":
                     self.onlineremove()
 
@@ -194,6 +194,7 @@ class Runbox:  # 自动回复等功能逻辑
         '''
         self.onlineuser.remove(self.nick)
 
+
 class Main:  # 主进程主要功能
     def __init__(self, room, name, msgToShowQ, msgToSendQ, cmdToExecQ):  # 初始化
         '''
@@ -206,7 +207,7 @@ class Main:  # 主进程主要功能
         self.cmdToExecQ = cmdToExecQ         # 接收来自Tkhand 传来的指令
         self.inittime = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime())
         self.logpath = './log/'+self.room+' '+self.inittime+'.txt'
-        with open(self.logpath, 'x') as log: # 创建日志文件
+        with open(self.logpath, 'x') as log:  # 创建日志文件
             pass
         self.runbox = Runbox(room, name, self.logpath)   # 处理信息库，主要负责自动回复
 
@@ -273,7 +274,7 @@ class Main:  # 主进程主要功能
                 服务器有数据返回时调用，根据不同的服务器数据调用自动回复与显示到界面聊天框
         '''
         js_ms = json.loads(message)  # 把信息装载成json
-        #print('######\n'+message+'\n######')
+        # print('######\n'+message+'\n######')
         self.runbox.handle(js_ms, ws)
         # 向界面发送需要显示在聊天框的内容
         if js_ms["cmd"] == "emote":
@@ -427,7 +428,7 @@ if __name__ == '__main__':
     msgToSendQ = Queue()   # 在Tkhand中把消息发送到ttomp这个队列，并由main处理发送到hackchat
     cmdToExecQ = Queue()   # 在Tkhand中把指令发送到cmdToExecQ这个队列，并在main中处理
     # 2个进程处理后端和前端
-    p1 = ProBot(hcroom="test", botname="dotbot", msgToShowQ=msgToShowQ,
+    p1 = ProBot(hcroom="your-channel", botname="dotbot", msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
     p2 = Tkhand(msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
