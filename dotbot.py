@@ -32,9 +32,19 @@ def sendData(text):
 class Runbox:  # 自动回复等功能逻辑
     def __init__(self, room, name, logpath):
         # 包含了房间名称，bot的名称
+        self.auto =True
         self.room = room
         self.name = name
         self.logpath = logpath
+        self.onlineuser = []
+        self.colordict = {
+            '404r':'ff5722',
+            'r':'ff5722',
+            '404b':'c0ffee',
+            'b':'c0ffee',
+            'wikidot':'f02727',
+            'vscode':'007acc'
+        }
 
     def sendmsg(self, msg):
         '''
@@ -54,28 +64,46 @@ class Runbox:  # 自动回复等功能逻辑
         '''
         self.ws = ws
         self.json_data = json_data
+        if "nick" in self.json_data:
+            self.nick = self.json_data["nick"]
+        if "text" in self.json_data:
+            self.text = self.json_data["text"]
+        if "color" in self.json_data:
+            self.color = self.json_data["color"]
+            if not self.nick in self.colordict.keys():
+                self.colordict[self.nick] = self.color
+            elif self.colordict[self.nick] != self.color:
+                self.colordict[self.nick] = self.color
+        if "trip" in self.json_data:
+            self.trip = self.json_data["trip"]
+        if "nicks" in self.json_data:
+            self.nicks = self.json_data["nicks"]
         if "cmd" in self.json_data:    # 如果接受到了包含cmd的json数据
-            # 说话类型
-            if self.json_data["cmd"] == "chat":
-                self.chat()  # 调用和机器人聊天
+            self.cmd = self.json_data["cmd"]
+            if self.auto:
+                # 说话类型
+                if self.cmd == "chat":
+                    self.chat()  # 调用和机器人聊天
 
-            # 用户进入类型
-            elif self.json_data["cmd"] == "onlineAdd":
-                self.onlineadd()  # 调用打招呼
+                # 用户进入类型
+                elif self.cmd== "onlineAdd":
+                    self.onlineadd()  # 调用打招呼
 
-            # 进入聊天时用户的列表
-            elif self.json_data["cmd"] == "onlineSet":
-                self.onlineset()  # 调用给所有人打招呼
+                # 进入聊天时用户的列表
+                elif self.cmd == "onlineSet":
+                    self.onlineset()  # 调用给所有人打招呼
 
-            else:
-                pass
+                #用户离开类型
+                elif self.cmd == "onlineRemove":
+                    self.onlineremove()
+
+                else:
+                    pass
 
     def chat(self):
         '''
                 当返回数据是有人说话时调用
         '''
-        self.nick = self.json_data["nick"]
-        self.text = self.json_data["text"]
         if self.text[0:1] == '.':
             self.chatcommand()
 
@@ -108,16 +136,12 @@ class Runbox:  # 自动回复等功能逻辑
             ''')
 
         elif ccmd == 'c' or ccmd == 'color':  # 快速获取颜色代码
-            if cobj == '404r' or cobj == 'r':
-                self.wsendmsg("`/color #ff5722`")
-            elif cobj == '404b' or cobj == 'b':
-                self.wsendmsg("`/color #c0ffee`")
-            elif cobj == 'wikidot':
-                self.wsendmsg("`/color #f02727`")
-            elif cobj.lower() == 'vscode':
-                self.wsendmsg("`/color #007acc`")
+            if cobj in self.colordict.keys():
+                print('###'+str(self.colordict))
+                getcolor = self.colordict[cobj]
+                self.wsendmsg("`/color #"+getcolor+'`')
             else:
-                self.wsendmsg("请输入正确的颜色代码。用.help获取颜色代码。")
+                self.wsendmsg("请输入正确的颜色代码。")
 
         elif ccmd == 'fy' or ccmd == 't' or ccmd == 'translate':  # 翻译功能，可能由于爬虫检测，翻译质量极差
             self.sendmsg("[youdao translator]"+fanyi.fanyi(cobj) +
@@ -132,7 +156,7 @@ class Runbox:  # 自动回复等功能逻辑
                         historyList = chatHistory.readlines()
                         if cobj >= 1 and cobj <= len(historyList):
                             chstr = ''.join(historyList[-cobj-1:-1])
-                            self.wsendmsg(' \n'+chstr)
+                            self.wsendmsg('以下是最近的'+str(cobj)+'条消息：\n'+chstr)
                         else:
                             self.wsendmsg(
                                 '当前仅记录了'+str(len(historyList)) + '条聊天记录。无法查询'+str(cobj)+'条聊天记录。')
@@ -140,6 +164,8 @@ class Runbox:  # 自动回复等功能逻辑
                     self.wsendmsg('当前记录聊天记录过文件过大。拒绝查询。')
             else:
                 self.wsendmsg('请输入合法的查询条数。')
+        elif ccmd == 'online' or ccmd == 'o':
+            self.wsendmsg('Online user: '+','.join(self.onlineuser))
         else:
             self.wsendmsg(
                 'Unknown dotbot command. Use ".help" to get help for dotbot commands. ')  # 未知命令
@@ -148,7 +174,7 @@ class Runbox:  # 自动回复等功能逻辑
         '''
                 当返回数据是有人加入时调用
         '''
-        self.nick = self.json_data["nick"]
+        self.onlineuser.append(self.nick)
         self.sendmsg("Hello,{}.".format(self.nick))
         self.wsendmsg(
             "To Chinese user: 可以试试说中文哦。your-channel一般有中国用户，即使有时他们正好都在说英文。\n")
@@ -157,17 +183,22 @@ class Runbox:  # 自动回复等功能逻辑
         '''
                 当返回数据是onlineset（加入一个新房间时会发生）将会调用
         '''
+        self.onlineuser = self.nicks
         self.sendmsg('/color #007acc')  # 自动设置名字颜色
         self.sendmsg(
             "Hi! Dotbot is here. \nDotbot is based on Foolishbird by Light and is made by 4n0n4me. ")
 
+    def onlineremove(self):
+        '''
+                当返回数据是有人离开时调用
+        '''
+        self.onlineuser.remove(self.nick)
 
 class Main:  # 主进程主要功能
     def __init__(self, room, name, msgToShowQ, msgToSendQ, cmdToExecQ):  # 初始化
         '''
                 从ProBot传来的参数
         '''
-        self.auto = True        # 自动回复开关，True为开启，False为关闭
         self.room = room
         self.name = name
         self.msgToShowQ = msgToShowQ         # 将从hackchat收到的消息发送到Tkhand
@@ -175,7 +206,7 @@ class Main:  # 主进程主要功能
         self.cmdToExecQ = cmdToExecQ         # 接收来自Tkhand 传来的指令
         self.inittime = time.strftime("%Y-%m-%d %H_%M_%S", time.localtime())
         self.logpath = './log/'+self.room+' '+self.inittime+'.txt'
-        with open(self.logpath, 'x') as log:
+        with open(self.logpath, 'x') as log: # 创建日志文件
             pass
         self.runbox = Runbox(room, name, self.logpath)   # 处理信息库，主要负责自动回复
 
@@ -228,9 +259,6 @@ class Main:  # 主进程主要功能
                             self.msgToSendQ.put(
                                 "{}".format(random.choice(ma_list)))
 
-                if cmd == "getobj":  # 调试用，获取obj
-                    self.tkshow(obj)
-
     def tkshow(self, text):
         '''
                 将需要显示的内容发送到msgToShow队列，并写入聊天记录
@@ -245,22 +273,15 @@ class Main:  # 主进程主要功能
                 服务器有数据返回时调用，根据不同的服务器数据调用自动回复与显示到界面聊天框
         '''
         js_ms = json.loads(message)  # 把信息装载成json
-        if self.auto:
-            self.runbox.handle(js_ms, ws)  # 调用自动回复，包括和机器人聊天、打招呼
+        #print('######\n'+message+'\n######')
+        self.runbox.handle(js_ms, ws)
         # 向界面发送需要显示在聊天框的内容
         if js_ms["cmd"] == "emote":
             self.tkshow("[INFO]:{}".format(js_ms["text"]))
         if js_ms["cmd"] == "onlineSet":  # 显示在线用户
-            onlineuser = "Onlineuser:"
-            for e in js_ms["nicks"]:
-                if e != js_ms["nicks"][-1]:
-                    onlineuser = onlineuser + e + ","
-                else:
-                    onlineuser = onlineuser + e
-            self.tkshow(onlineuser)
+            self.tkshow('Online user: '+','.join(js_ms["nicks"]))
         if js_ms["cmd"] == "chat":
-            self.tkshow("{}:{}".format(
-                js_ms["nick"], js_ms["text"]))  # 直接转述
+            self.tkshow("{}:{}".format(js_ms["nick"], js_ms["text"]))  # 直接转述
         if js_ms["cmd"] == "onlineAdd":
             self.tkshow("* {} join".format(js_ms["nick"]))  # 显示有人加入
         if js_ms["cmd"] == "onlineRemove":
@@ -384,7 +405,7 @@ class ProBot(Process):  # 继承进程类，定义Bot进程：由main处理信�
         '''
                 定义进程活动。Probot进程连接hackchat，定义了服务器发送信息、出现错误、从服务器踢出时执行的方法。
         '''
-        websocket.enableTrace(False)#禁用控制台输出
+        websocket.enableTrace(False)  # 禁用控制台输出
         ws = websocket.WebSocketApp("wss://hack.chat/chat-ws",
                                     on_message=self.main.on_message,
                                     on_error=self.main.on_error,
@@ -406,7 +427,7 @@ if __name__ == '__main__':
     msgToSendQ = Queue()   # 在Tkhand中把消息发送到ttomp这个队列，并由main处理发送到hackchat
     cmdToExecQ = Queue()   # 在Tkhand中把指令发送到cmdToExecQ这个队列，并在main中处理
     # 2个进程处理后端和前端
-    p1 = ProBot(hcroom="your-channel", botname="dotbot", msgToShowQ=msgToShowQ,
+    p1 = ProBot(hcroom="test", botname="dotbot", msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
     p2 = Tkhand(msgToShowQ=msgToShowQ,
                 msgToSendQ=msgToSendQ, cmdToExecQ=cmdToExecQ)
