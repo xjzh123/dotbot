@@ -273,7 +273,7 @@ class Main:  # 主进程主要功能
         '''
                 服务器有数据返回时调用，根据不同的服务器数据调用自动回复与显示到界面聊天框
         '''
-        js_ms = json.loads(message)  # 把信息装载成json
+        js_ms = json.loads(message)  # 把json信息装载成python对象
         # print('######\n'+message+'\n######')
         self.runbox.handle(js_ms, ws)
         # 向界面发送需要显示在聊天框的内容
